@@ -4,14 +4,16 @@ using System.Collections.Generic;
 using System.Text;
 using MyXamChat.Model;
 using Xamarin.Forms;
-using Microsoft.AspNetCore.SignalR.Client;
+//using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.AspNet.SignalR.Client;
 using System.Threading.Tasks;
 
 namespace MyXamChat.ViewModel
 {
    public class ChatViewModel:BaseViewModel
     {
-        protected HubConnection hubConnection;
+      //  protected HubConnection hubConnection;
+      protected IHubProxy hubProxy;
         public ChatMesage chatmessage { get; }
         public ObservableRangeCollection<ChatMesage> Mesages { get; }
         public Command SendMessageCommand { get; }
@@ -33,29 +35,32 @@ namespace MyXamChat.ViewModel
     
         public ChatViewModel()
         {
+            HubConnection con = new HubConnection("http://infosasics-001-site9.htempurl.com/signalr/hubs");
+            hubProxy = con.CreateHubProxy("chat");
+            con.Start();
             chatmessage = new ChatMesage();
             Mesages = new ObservableRangeCollection<ChatMesage>();
             SendMessageCommand = new Command(async()=>await SendMessage());
-            ConnectCommand = new Command(async()=>await Connect());
-            DisconnectCommand = new Command(async()=>await Disconnect());
-            var ip = "localhost";
-            if (Device.RuntimePlatform == Device.Android)
-                ip = "10.0.2.2";
-            hubConnection = new HubConnectionBuilder()
-                                .WithUrl($"http://192.168.1.22:5000/chatHub")
-                                .Build();
+           // ConnectCommand = new Command(async()=>await Connect());
+           // DisconnectCommand = new Command(async()=>await Disconnect());
+            //var ip = "localhost";
+            //if (Device.RuntimePlatform == Device.Android)
+            //    ip = "10.0.2.2";
+            //hubConnection = new HubConnectionBuilder()
+            //                    .WithUrl($"http://infosasics-001-site9.htempurl.com/signalr/hubs")
+            //                    .Build();
              random = new Random();
-            hubConnection.Closed += async (error) =>
-            {
-            SendLocalMessage("connected Cloose...");
+            //hubConnection.Closed += async (error) =>
+            //{
+            //SendLocalMessage("connected Cloose...");
 
-                await Task.Delay(random.Next(0, 5) * 1000);
-                await Connect();
-            };
+            //    await Task.Delay(random.Next(0, 5) * 1000);
+            //    await Connect();
+            //};
 
-            hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+            hubProxy.On<string, string>("newMessage", (user, message) =>
               {
-                  var finalmessage = $"{user} says {message}";
+                  var finalmessage = $"{user} says :{message}";
                   SendLocalMessage(finalmessage);
               });
         }
@@ -71,10 +76,12 @@ namespace MyXamChat.ViewModel
         {
             try
             {
-                IsBusy = true;
-                await hubConnection.InvokeAsync("SendMessage",
-                                               chatmessage.User,
-                                               chatmessage.Message);
+               // IsBusy = true;
+                await hubProxy.Invoke("sendMessage", chatmessage.User,
+                                                     chatmessage.Message);
+                //await hubConnection.InvokeAsync("SendMessage",
+                //                               chatmessage.User,
+                //                               chatmessage.Message);
             }
             catch (Exception ex)
             {
@@ -82,33 +89,33 @@ namespace MyXamChat.ViewModel
             }
             finally
             {
-                IsBusy = false;
+              //  IsBusy = false;
             }
         }
-        async Task Connect()
-        {
-            if (IsConnected)
-                return;
+        //async Task Connect()
+        //{
+        //    if (IsConnected)
+        //        return;
 
-            try
-            {
-                await hubConnection.StartAsync();
-                isConnected = true;
-                SendLocalMessage("Connecting....");
-            }
-            catch (Exception ex)
-            {
+        //    try
+        //    {
+        //        await hubConnection.StartAsync();
+        //        isConnected = true;
+        //        SendLocalMessage("Connecting....");
+        //    }
+        //    catch (Exception ex)
+        //    {
 
-               SendLocalMessage($"connection error :{ex.Message}");
-            }
-        }
-        async Task Disconnect()
-        {
-            if (!IsConnected)
-                return;
-            await hubConnection.StopAsync();
-            isConnected = false;
-            SendLocalMessage("Disconnected");
-        }
+        //       SendLocalMessage($"connection error :{ex.Message}");
+        //    }
+        //}
+        //async Task Disconnect()
+        //{
+        //    if (!IsConnected)
+        //        return;
+        //    await hubConnection.StopAsync();
+        //    isConnected = false;
+        //    SendLocalMessage("Disconnected");
+        //}
     }
 }

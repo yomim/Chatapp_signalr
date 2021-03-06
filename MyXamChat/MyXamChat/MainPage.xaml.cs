@@ -25,12 +25,12 @@ namespace MyXamChat
         protected override void OnAppearing()
         {
             base.OnAppearing();
-            VM.ConnectCommand.Execute(null);
+            //VM.ConnectCommand.Execute(null);
         }
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            VM.DisconnectCommand.Execute(null);
+           // VM.DisconnectCommand.Execute(null);
         }
     }
 }
